@@ -46,7 +46,7 @@ namespace API
             });
             services.AddCors();
             services.AddIdentityServices(_config);
-
+            //services.AddAutoMapper();
 
         }
 
