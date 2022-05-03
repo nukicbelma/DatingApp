@@ -41,7 +41,7 @@ this.toastr.toastrConfig.positionClass="toast-top-center";
   updateMember()
   {
     this.memberService.updateMember(this.member).subscribe(()=>{
-      this.toastr.success('Profile updatet successfully');
+      this.toastr.success('Profile updated successfully');
       this.editForm.reset(this.member);
     })
 
