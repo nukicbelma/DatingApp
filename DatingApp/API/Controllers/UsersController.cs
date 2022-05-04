@@ -2,6 +2,7 @@
 using API.DTOs;
 using API.Entities;
 using API.Extensions;
+using API.Helpers;
 using API.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -32,14 +33,21 @@ namespace API.Controllers
         }
         [HttpGet]
 
-        public async Task<ActionResult<IEnumerable<MemberDto>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<MemberDto>>> GetUsers([FromQuery] UserParams userParams)
         {
-            var users = await _userRepository.GetMembersAsync();
+            var user = await _userRepository.GetUserByUsernameAsync(User.GetUsername());
+            userParams.CurrentUsername = user.UserName;
+            if (string.IsNullOrEmpty(userParams.Gender))
+            {
+                userParams.Gender = user.Gender == "male" ? "female" : "male";
+            }
+            var users = await _userRepository.GetMembersAsync(userParams);
+            Response.AddPaginationHeader(users.CurrentPage, users.PageSize, users.TotalCount, users.TotalPages);
             return Ok(users);
 
         }
 
-        [HttpGet("{username}", Name = "GetUser")] 
+        [HttpGet("{username}", Name = "GetUser")]  // Name can be used as one of parameters in CreatedAtRoute in AddPhoto function
         public async Task<ActionResult<MemberDto>> GetUser(string username)
         {
             return await _userRepository.GetMemberAsync(username);
@@ -48,7 +56,8 @@ namespace API.Controllers
         [HttpPut]
         public async Task<ActionResult> UpdateUser(MemberUpdateDto memberUpdateDto)
         {
-
+            // var username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value; //get username from token api uses to authenticate this user
+            // var username = User.GetUsername();
             var user = await _userRepository.GetUserByUsernameAsync(User.GetUsername());
             _mapper.Map(memberUpdateDto, user);
             _userRepository.Update(user);
@@ -59,26 +68,28 @@ namespace API.Controllers
         [HttpPost("add-photo")]
         public async Task<ActionResult<PhotoDto>> AddPhoto(IFormFile file)
         {
-            var user = await _userRepository.GetUserByUsernameAsync(User.GetUsername()); 
-            var result = await _photoService.AddPhotoAsync(file); 
-            if (result.Error != null)
+            var user = await _userRepository.GetUserByUsernameAsync(User.GetUsername()); //get user 
+            var result = await _photoService.AddPhotoAsync(file); //result from photoService
+            if (result.Error != null) //check if we have error
             {
                 return BadRequest(result.Error.Message);
             }
-            var photo = new Photo 
+            var photo = new Photo //create new photo 
             {
                 Url = result.SecureUrl.AbsoluteUri,
                 PublicId = result.PublicId
 
             };
-            if (user.Photos.Count == 0) 
+            if (user.Photos.Count == 0) // user have any photos?
             {
-                photo.IsMain = true;
+                photo.IsMain = true; //if dont set to main
             }
-            user.Photos.Add(photo);  
-            if (await _userRepository.SaveAllAsync()) 
+            user.Photos.Add(photo); //add photo 
+            if (await _userRepository.SaveAllAsync()) //return the photo
             {
 
+                // return _mapper.Map<PhotoDto>(photo);
+                // return CreatedAtRoute("GetUser", _mapper.Map<PhotoDto>(photo)); //returning a route to get the user (that contains a photo) and photo object //doesnt work bc GetUser needs a username parameter 
                 return CreatedAtRoute("GetUser", new { username = user.UserName }, _mapper.Map<PhotoDto>(photo));
             }
             return BadRequest("Problem adding photo");
