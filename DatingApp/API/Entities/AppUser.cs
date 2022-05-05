@@ -30,6 +30,9 @@ namespace API.Entities
         //    return DateOdBirth.CalculateAge();
         //}
         public ICollection<UserLike> LikedByUsers { get; set; } 
-        public ICollection<UserLike> LikedUsers { get; set; } 
+        public ICollection<UserLike> LikedUsers { get; set; }
+        //section 14
+        public ICollection<Message> MessagesSent { get; set; }
+        public ICollection<Message> MessagesReceived { get; set; }
     }
 }
