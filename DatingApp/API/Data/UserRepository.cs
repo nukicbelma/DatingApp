@@ -54,7 +54,12 @@ namespace API.Data
         {
             return await _context.Users.FindAsync(id);
         }
-
+        public async Task<string> GetUserGender(string username)
+        {
+            return await _context.Users
+                .Where(x => x.UserName == username)
+                .Select(x => x.Gender).FirstOrDefaultAsync();
+        }
         public async Task<AppUser> GetUserByUsernameAsync(string username)
         {
             return await _context.Users.Include(x => x.Photos).SingleOrDefaultAsync(x => x.UserName == username);
@@ -64,12 +69,6 @@ namespace API.Data
         {
             return await _context.Users.Include(x => x.Photos).ToListAsync();
         }
-
-        public async Task<bool> SaveAllAsync()
-        {
-            return await _context.SaveChangesAsync() > 0; 
-        }
-
         public void Update(AppUser user)
         {
             _context.Entry(user).State = EntityState.Modified;
