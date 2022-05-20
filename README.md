@@ -1,3 +1,3 @@
 ## praksa
 
-###DatingApp aplication created in Angular and .NetCore 
+###  Application created in Angular and .NetCore 
